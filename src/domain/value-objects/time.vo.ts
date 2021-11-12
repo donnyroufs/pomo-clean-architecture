@@ -6,8 +6,10 @@ export class TimeVo {
   }
 
   static make(minutes: number): TimeVo {
-    const timeInMs = minutes * 60 * 1000
+    return new TimeVo(this.minutesToMs(minutes))
+  }
 
-    return new TimeVo(10_000)
+  private static minutesToMs(minutes: number) {
+    return minutes * 60 * 1000
   }
 }

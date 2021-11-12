@@ -1,50 +1,66 @@
 import { BaseEntity } from '../common/base.entity'
-import { Pomodoro, PomodoroType } from './pomodoro.entity'
+import { UniqueId } from '../common/unique-id.vo'
+import { PomodoroType } from '../enums/pomodoro.enum'
+import { Timer } from '../timer'
+import { Pomodoro } from './pomodoro.entity'
+
+export type Callback = (timeLeftInMs: number, currentPomodoro: Pomodoro) => void
 
 export class Session extends BaseEntity {
-  private _timerId: NodeJS.Timer
-  private _elapsedMS = 0
-  private _currentCycle = 0
-
+  public finished = false
   private readonly _pomodoros: Pomodoro[] = []
 
-  private constructor() {
+  private constructor(private readonly _timer: Timer) {
     super()
   }
 
-  public start() {
-    const totalTime = 0
+  public start(callback: Callback) {
+    this.createPomodoros()
+
+    let total = this._pomodoros.reduce(
+      (acc, curr) => acc + curr.time.getValue(),
+      0
+    )
+
     let index = 0
+    let lastIndex = 0
 
-    this._timerId = setInterval(() => {
-      console.clear()
-      console.log(this._elapsedMS)
-
-      // What is the current pomodoroIndex
+    this._timer.start((elapsed) => {
       const pomoTimeTable = this._pomodoros.map((p) => p.time.getValue())
-
-      // [10_000, 10_000]
-      // beginning index: 0
-      //
-      // 10_000, index 1
-
       let sum = 0
 
-      pomoTimeTable.forEach((p, i) => {
-        sum += p
+      const timeLeftInMs = sum - elapsed
 
-        if (this._elapsedMS > sum) {
-          index += 1
-          return
+      callback(timeLeftInMs, this._pomodoros[index])
+
+      pomoTimeTable.some((time, i) => {
+        if (sum + time > elapsed) {
+          if (lastIndex !== i) {
+            index += 1
+            lastIndex = i
+          }
+          return true
         }
+
+        sum += time
       })
 
-      console.log(sum, index)
+      elapsed += 1000
 
-      this._elapsedMS += 1000
-    }, 1000)
+      if (elapsed >= total) {
+        this.next()
 
-    this.createPomodoros()
+        total = this._pomodoros.reduce(
+          (acc, curr) => acc + curr.time.getValue(),
+          0
+        )
+      }
+    })
+  }
+
+  public stop() {
+    this._timer.stop()
+    this.finished = true
   }
 
   public getPomodoros() {
@@ -94,7 +110,7 @@ export class Session extends BaseEntity {
     return currentLength % 4 === 0
   }
 
-  static make(): Session {
-    return new Session()
+  static make(timer: Timer): Session {
+    return new Session(timer)
   }
 }

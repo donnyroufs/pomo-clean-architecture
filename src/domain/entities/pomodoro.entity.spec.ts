@@ -1,5 +1,5 @@
-import { TimeVo } from '../value-objects/time.vo'
-import { Pomodoro, PomodoroType } from './pomodoro.entity'
+import { PomodoroType } from '../enums/pomodoro.enum'
+import { Pomodoro } from './pomodoro.entity'
 
 describe('pomodoro.entity', () => {
   test('is defined', () => {
@@ -16,11 +16,18 @@ describe('pomodoro.entity', () => {
     expect(pomodoroTwo.getType()).toBe(PomodoroType.SHORT_BREAK)
   })
 
-  test('start pomodoro', () => {
-    const pomo = Pomodoro.make()
+  test('sets time based on type', () => {
+    const shortPomo = Pomodoro.make(PomodoroType.SHORT_BREAK)
+    const expectedShortPomoTime = 5 * 60 * 1000
 
-    const timer = pomo.start()
+    const longPomo = Pomodoro.make(PomodoroType.LONG_BREAK)
+    const expectedLongPomoTime = 15 * 60 * 1000
 
-    expect(timer).toBeInstanceOf(TimeVo)
+    const workPomo = Pomodoro.make(PomodoroType.WORK)
+    const expectedWorkPromoTime = 25 * 60 * 1000
+
+    expect(shortPomo.time.getValue()).toBe(expectedShortPomoTime)
+    expect(longPomo.time.getValue()).toBe(expectedLongPomoTime)
+    expect(workPomo.time.getValue()).toBe(expectedWorkPromoTime)
   })
 })

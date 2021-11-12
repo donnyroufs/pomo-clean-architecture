@@ -1,15 +1,23 @@
 import 'dotenv/config'
-import { Session } from './domain/entities/session.entity'
+import { StartSessionUseCase } from './application/use-cases/start-session.use-case'
+import { SessionFactory } from './domain/entities/session.factory'
 
-export function bootstrap() {
-  const session = Session.make()
+import { MakeCLI } from './infra/implementations/drivers/cli'
+import { SessionRepoImpl } from './infra/implementations/session-repo.impl'
 
-  session.start()
-  const pomos = session.getPomodoros()
+export async function bootstrap() {
+  const sessionRepo = new SessionRepoImpl()
+  const sessionFactory = new SessionFactory()
+  const startSessionUseCase = new StartSessionUseCase(
+    sessionRepo,
+    sessionFactory
+  )
 
-  console.log({
-    init: pomos,
+  const CLI = MakeCLI({
+    startSessionUseCase,
   })
+
+  await CLI.run()
 }
 
 bootstrap()

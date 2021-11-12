@@ -1,3 +1,3 @@
-export interface IUseCase<Input, Output> {
-  execute(input: Input): Promise<Output> | Output
+export interface IUseCase<Input, Output, Err = Error> {
+  execute(input: Input): Promise<Output | Err> | Output | Err
 }
